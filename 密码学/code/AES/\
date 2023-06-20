@@ -1,0 +1,14 @@
+
+
+
+def text2matrix(text):
+    matrix=[]
+    for i in range(4):
+        row = []
+        byte = text&0xff
+        
+
+        row.append[]
+
+
+
