@@ -1,0 +1,5 @@
+/home/username/Desktop/daydaylearn/cmake学习/t4/build/CMakeFiles/edit_cache.dir
+/home/username/Desktop/daydaylearn/cmake学习/t4/build/CMakeFiles/rebuild_cache.dir
+/home/username/Desktop/daydaylearn/cmake学习/t4/build/src/CMakeFiles/main.dir
+/home/username/Desktop/daydaylearn/cmake学习/t4/build/src/CMakeFiles/edit_cache.dir
+/home/username/Desktop/daydaylearn/cmake学习/t4/build/src/CMakeFiles/rebuild_cache.dir
