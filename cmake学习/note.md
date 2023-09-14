@@ -183,3 +183,50 @@ TARGET_LINK_LIBRARIES(target library1
 使用方法是要在 bash 中用 export 或者在 csh 中使用 set 命令设置或者
 CMAKE_INCLUDE_PATH=/home/include cmake ..等方式。
 
+
+
+前面我们直接使用了绝对路径 INCLUDE_DIRECTORIES(/usr/include/hello)告诉工
+程这个头文件目录。
+为了将程序更智能一点,我们可以使用 CMAKE_INCLUDE_PATH 来进行,使用 bash 的方法
+如下:
+export CMAKE_INCLUDE_PATH=/usr/include/hello
+然后在头文件中将 INCLUDE_DIRECTORIES(/usr/include/hello)替换为:
+FIND_PATH(myHeader hello.h)
+IF(myHeader)
+INCLUDE_DIRECTORIES(${myHeader})
+ENDIF(myHeader)
+
+FIND_PATH 用来在指定路径中搜索文件名,比如:
+FIND_PATH(myHeader NAMES hello.h PATHS /usr/include /usr/include/hello)
+这里我们没有指定路径,但是,cmake 仍然可以帮我们找到 hello.h 存放的路径,就是因为我们设置了环境变量 CMAKE_INCLUDE_PATH。
+如果你不使用 FIND_PATH,CMAKE_INCLUDE_PATH 变量的设置是没有作用的,你不能指望它会直接为编译器命令添加参数-I<CMAKE_INCLUDE_PATH>
+
+
+
+## 五 cmake 常用变量和常用环境变量
+
+一,cmake 变量引用的方式:
+前面我们已经提到了,使用`${}`进行变量的引用。在 IF 等语句中,是直接使用变量名而不通过`${}`取值
+
+二,cmake 自定义变量的方式:
+主要有隐式定义和显式定义两种,前面举了一个隐式定义的例子,就是 PROJECT 指令,他会隐式的定义`<projectname>_BINARY_DIR` `<projectname>_SOURCE_DIR `两个变量。
+显式定义的例子我们前面也提到了,使用 SET 指令,就可以构建一个自定义变量了。
+比如:
+SET(HELLO_SRC main.SOURCE_PATHc),就 PROJECT_BINARY_DIR 可以通过${HELLO_SRC}来引用这个自定义变量了.
+
+三,cmake 常用变量:
+1,`CMAKE_BINARY_DIR`
+`PROJECT_BINARY_DIR`
+`<projectname>_BINARY_DIR`
+这三个变量指代的内容是一致的,如果是 in source 编译,指得就是工程顶层目录,如果
+是 out-of-source 编译,指的是工程编译发生的目录。PROJECT_BINARY_DIR 跟其他
+指令稍有区别,现在,你可以理解为他们是一致的。
+2,`CMAKE_SOURCE_DIR`
+`PROJECT_SOURCE_DIR`
+`<projectname>_SOURCE_DIR`
+这三个变量指代的内容是一致的,不论采用何种编译方式,都是工程顶层目录。
+也就是在 in source 编译时,他跟 CMAKE_BINARY_DIR 等变量一致。
+PROJECT_SOURCE_DIR 跟其他指令稍有区别,现在,你可以理解为他们是一致的。
+3,CMAKE_CURRENT_SOURCE_DIR
+指的是当前处理的 CMakeLists.txt 所在的路径,比如上面我们提到的 src 子目录。
+
