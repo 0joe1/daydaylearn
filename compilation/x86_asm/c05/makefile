@@ -1,6 +1,6 @@
 OBJS_BIN=c05_mbr.bin
 
-.PHONY:
+
 #image: ${OBJS_BIN} 定义了一个名为image的目标，依赖于OBJS_BIN，
 #表示要生成一个名为c05.img的磁盘映像文件，并将c05.bin写入该磁盘映像中。
 image: ${OBJS_BIN}
@@ -23,3 +23,5 @@ run: ${OBJS_BIN}
 
 clean:
 	rm -rf *.img  *.out *.lock *.bin 
+
+.PHONY:clean image
