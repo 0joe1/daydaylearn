@@ -65,7 +65,7 @@ put_char:                                ;显示一个字符
          cmp cl,0x0d                     ;回车符？
          jnz .put_0a                     ;不是。看看是不是换行等字符 
          mov ax,bx                       ;此句略显多余，但去掉后还得改书，麻烦 
-         mov bl,80                       
+         mov bl,80
          div bl
          mul bl
          mov bx,ax
@@ -137,7 +137,7 @@ put_char:                                ;显示一个字符
          mov ax,[stack_segment]           ;设置到用户程序自己的堆栈 
          mov ss,ax
          mov sp,stack_end
-         
+
          mov ax,[data_1_segment]          ;设置到用户程序自己的数据段
          mov ds,ax
 
@@ -147,7 +147,7 @@ put_char:                                ;显示一个字符
          push word [es:code_2_segment]
          mov ax,begin
          push ax                          ;可以直接push begin,80386+
-         
+
          retf                             ;转移到代码段2执行 
          
   continue:
