@@ -25,6 +25,9 @@
 static char* heap_lisp;
 static void* extend_heap(size_t words);
 static void* coalesce(void* bp);
+static void* find_fit(size_t asize);
+static void  place(void* bp,size_t asize);
+
 
 int mm_init(void)
 {
@@ -107,4 +110,48 @@ void* mm_malloc(size_t size)
     if (size == 0){
         return NULL;
     }
+    if (size <= DSIZE)
+        asize = 2*DSIZE;
+    else
+        asize = DSIZE*((size + (DSIZE) + (DSIZE-1))/DSIZE);
+
+    char* bp;
+    if ((bp = find_fit(asize)) != NULL){
+        place(bp,asize);
+        return bp;
+    }
+
+    extend_size = MAX(asize,CHUNKSIZE); //每次扩张至少有CHUNKSIZE
+    if ((bp = extend_heap(asize)) == NULL){
+        return NULL;
+    }
+    place(bp,asize);
+
+    return bp;
 }
+
+static void* find_fit(size_t asize)
+{
+    void* p = heap_lisp;
+    while (GETALLOC(HDRP(p)) || GETSIZE(HDRP(p)) < asize)
+    {
+        if (GETALLOC(HDRP(p)) && GETSIZE(HDRP(p))==0)
+            return NULL;
+        else
+            p = NEXT_BRKP(p);
+    }
+    return p;
+}
+static void place(void* bp,size_t asize)
+{
+    size_t remain_size = GETSIZE(HDRP(bp))-asize;
+    PUT(HDRP(bp),PACK(asize,1));
+    PUT(FTRP(bp),PACK(asize,1));
+
+    if (remain_size < 2*DSIZE)
+        return;
+
+    PUT(HDRP(NEXT_BRKP(bp)),PACK(remain_size,0));
+    PUT(FTRP(NEXT_BRKP(bp)),PACK(remain_size,0));
+}
+

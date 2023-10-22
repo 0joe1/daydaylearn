@@ -37,7 +37,7 @@
          mov dword [ebx+0x24],0x00cf9600
          
          ;初始化描述符表寄存器GDTR
-         mov word [cs: pgdt+0x7c00],39      ;描述符表的界限   
+         mov word [cs: pgdt+0x7c00],39      ;描述符表的界限
  
          lgdt [cs: pgdt+0x7c00]
       
@@ -50,7 +50,6 @@
          mov eax,cr0
          or eax,1
          mov cr0,eax                        ;设置PE位
-      
          ;以下进入保护模式... ...
          jmp dword 0x0010:flush             ;16位的描述符选择子：32位偏移
                                              
@@ -67,29 +66,29 @@
          mov eax,0x0020                     ;0000 0000 0010 0000
          mov ss,eax
          xor esp,esp                        ;ESP <- 0
-      
+
          mov dword [es:0x0b8000],0x072e0750 ;字符'P'、'.'及其显示属性
          mov dword [es:0x0b8004],0x072e074d ;字符'M'、'.'及其显示属性
          mov dword [es:0x0b8008],0x07200720 ;两个空白字符及其显示属性
          mov dword [es:0x0b800c],0x076b076f ;字符'o'、'k'及其显示属性
 
          ;开始冒泡排序 
-         mov ecx,pgdt-string-1              ;遍历次数=串长度-1 
+         mov ecx,pgdt-string-1              ;遍历次数=串长度-1
   @@1:
          push ecx                           ;32位模式下的loop使用ecx 
          xor bx,bx                          ;32位模式下，偏移量可以是16位，也可以 
   @@2:                                      ;是后面的32位 
          mov ax,[string+bx] 
          cmp ah,al                          ;ah中存放的是源字的高字节 
-         jge @@3 
-         xchg al,ah 
+         jge @@3
+         xchg al,ah
          mov [string+bx],ax 
   @@3:
          inc bx 
          loop @@2 
          pop ecx 
          loop @@1
-      
+
          mov ecx,pgdt-string
          xor ebx,ebx                        ;偏移地址是32位的情况 
   @@4:                                      ;32位的偏移具有更大的灵活性

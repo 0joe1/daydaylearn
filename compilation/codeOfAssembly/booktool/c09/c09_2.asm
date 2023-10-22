@@ -33,7 +33,7 @@ start:
       
       mov cx,msg_end-message
       mov bx,message
-      
+
  .putc:
       mov ah,0x0e
       mov al,[bx]
@@ -44,7 +44,7 @@ start:
  .reps:
       mov ah,0x00
       int 0x16
-      
+
       mov ah,0x0e
       mov bl,0x07
       int 0x10

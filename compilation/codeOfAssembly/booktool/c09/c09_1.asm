@@ -2,7 +2,7 @@
          ;文件名：c09_1.asm
          ;文件说明：用户程序 
          ;创建日期：2011-4-16 22:03
-         
+
 ;===============================================================================
 SECTION header vstart=0                     ;定义用户程序头部段 
     program_length  dd program_end          ;程序总长度[0x00]
@@ -30,10 +30,10 @@ new_int_0x70:
       push cx
       push dx
       push es
-      
-  .w0:                                    
+
+  .w0:
       mov al,0x0a                        ;阻断NMI。当然，通常是不必要的
-      or al,0x80                          
+      or al,0x80
       out 0x70,al
       in al,0x71                         ;读寄存器A
       test al,0x80                       ;测试第7位UIP 
@@ -88,7 +88,7 @@ new_int_0x70:
       call bcd_to_ascii
       mov [es:bx+12],ah
       mov [es:bx+14],al                  ;显示两位小时数字
-      
+
       mov al,0x20                        ;中断结束命令EOI 
       out 0xa0,al                        ;向从片发送 
       out 0x20,al                        ;向主片发送 
@@ -140,7 +140,6 @@ start:
       mov ax,0x0000
       mov es,ax
       mov word [es:bx],new_int_0x70      ;偏移地址。
-                                          
       mov word [es:bx+2],cs              ;段地址
       pop es
 
@@ -216,7 +215,7 @@ put_char:                                ;显示一个字符
          cmp cl,0x0d                     ;回车符？
          jnz .put_0a                     ;不是。看看是不是换行等字符 
          mov ax,bx                       ; 
-         mov bl,80                       
+         mov bl,80
          div bl
          mul bl
          mov bx,ax

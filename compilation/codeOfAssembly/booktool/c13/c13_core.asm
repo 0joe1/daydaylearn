@@ -400,7 +400,7 @@ load_relocate_program:                      ;加载并重定位用户程序
          mov ds,eax                         ;切换DS到内核数据段
        
          mov eax,esi                        ;读取程序头部数据 
-         mov ebx,core_buf                        
+         mov ebx,core_buf
          call sys_routine_seg_sel:read_hard_disk_0
 
          ;以下判断整个程序有多大

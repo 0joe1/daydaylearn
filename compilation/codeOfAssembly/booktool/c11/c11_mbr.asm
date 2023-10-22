@@ -15,7 +15,7 @@
          div bx            
          mov ds,ax                          ;令DS指向该段以进行操作
          mov bx,dx                          ;段内起始偏移地址 
-      
+
          ;创建0#描述符，它是空描述符，这是处理器的要求
          mov dword [bx+0x00],0x00
          mov dword [bx+0x04],0x00  
@@ -34,7 +34,6 @@
 
          ;初始化描述符表寄存器GDTR
          mov word [cs: gdt_size+0x7c00],31  ;描述符表的界限（总字节数减一）   
-                                             
          lgdt [cs: gdt_size+0x7c00]
       
          in al,0x92                         ;南桥芯片内的端口 
