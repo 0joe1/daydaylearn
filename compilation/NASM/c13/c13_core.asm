@@ -6,7 +6,7 @@
         mem_0_4_gb_seg_sel     equ  0x08
 
 ;---------------------------------------------------------------
-        core length     dd core_end
+        core_length     dd core_end
 
         sys_routine_seg dd section.sys_routine.start
 
@@ -20,6 +20,32 @@
 ;===============================================================
         [bits 32] ;别忘这个标志
 SECTION sys_routine vstart=0
+;---------------------------------------------------------------
+put_hex_dword:
+        pushad
+        push ds
+
+        mov ax,core_code_seg_sel
+        mov ds,ax
+
+        mov ebx,bin_hex
+        mov ecx,8
+    .xlt:
+        rol edx,4
+        mov eax,edx
+        and eax,0x0000000f
+        xlat
+
+        push ecx
+        mov cl,al
+        call put_char
+        pop ecx
+
+        loop .xlt
+
+        pop ds
+        popad
+        retf
 ;---------------------------------------------------------------
 ;输入：DS:EBX=串地址
 put_string:
@@ -69,7 +95,7 @@ put_char:
 
     .put_other:
         push es
-        mov es,video_ram_seg_sel
+        mov eax,video_ram_seg_sel
         mov es,eax
         shl bx,1
         mov [es:bx],cl
@@ -175,25 +201,152 @@ read_hard_disk_0:
 
         retf
 ;---------------------------------------------------------------
-;分配内存 ecx(希望分配的字节数) 
+;分配内存 ecx(希望分配的字节数)
 allocate_memory:
+        push ds
+        push eax
+        push ebx
+
+        mov eax,core_data_seg_sel
+        mov ds,eax
+
+        mov eax,[ram_alloc]
+        add eax,ecx
+
+        mov ecx,[ram_alloc]
+
+        mov ebx,eax
+        and ebx,0xfffffffc
+        add ebx,4
+        test eax,0x00000003
+        cmovnz eax,ebx
+
+        mov [ram_alloc],eax
+
+        pop ebx
+        pop eax
+        pop ds
+
+        retf
+;---------------------------------------------------------------
+;eax(线性基地址) ebx(段界限) ecx(属性)
+;返回 edx:eax=描述符
+make_seg_descriptor:
+        mov edx,eax
+        shl eax,16
+        or ax,bx
+
+        and edx,0xffff0000
+        rol edx,8
+        bswap edx
+
+        xor bx,bx
+        or edx,ebx
+        or edx,ecx
+
+        retf
+;---------------------------------------------------------------
+;edx:eax=描述符
+;输出cx=描述符的选择子
+set_up_gdt_descriptor:
+        push eax
+        push ebx
+        push edx
+
+        push ds
+        push es
+
+        mov ebx,core_data_seg_sel
+        mov ds,ebx
+
+        sgdt [pgdt]
+
+        mov ebx,mem_0_4_gb_seg_sel
+        mov es,ebx
+
+        mov ecx,[pgdt+0x02]
+        movzx ebx,word [pgdt]
+        inc bx                 ;可能是0x0000ffff
+        add ecx,ebx
+
+        mov [es:ecx],eax
+        mov [es:ecx+4],edx
+
+        add word[pgdt],8
+        lgdt [pgdt]
+
+        mov ax,[pgdt]
+        xor dx,dx
+        mov bx,8
+        div bx
+        mov cx,ax
+        shl cx,3
+
+        pop es
+        pop ds
+
+        pop edx
+        pop ebx
+        pop eax
+
+        retf
 
 ;===============================================================
 SECTION core_data vstart=0
+        pgdt        dw 0
+                    dd 0
+
+        ram_alloc   dd 0x00100000
+
+        salt:
+        salt_1      db '@PrintString'
+                    times 256-($-salt_1) db 0
+                    dd put_string
+                    dw sys_routine_seg_sel
+
+        salt_2      db '@ReadDiskData'
+                    times 256-($-salt_2) db 0
+                    dd read_hard_disk_0
+                    dw sys_routine_seg_sel
+
+        salt_3      db '@PrintDwordAsHexString'
+                    times 256-($-salt_3) db 0
+                    dd put_hex_dword
+                    dw sys_routine_seg_sel
+
+        salt_4      db 'TerminateProgram'
+                    times 256-($-salt_4) db 0
+                    dd return_point
+                    dw core_code_seg_sel
+
+        salt_item_len equ $-salt_4
+        salt_items    equ ($ - salt)/salt_item_len
+
         message_1  db 'Now we are in protect mode '
                    db 0x0d,0x0a
                    db 'And the core has been loaded',0x0d,0x0a,0
 
         message_5  db ' Loading user program...',0
 
+        do_status  db 'Done.',0x0d,0x0a,0
+
+        message_6  db 0x0d,0x0a,0x0d,0x0a,0x0d,0x0a
+                   db ' User program terminated,control returned',0
+
+        bin_hex    db '0123456789ABCDEF'
+
         core_buf times 2048 db 0
+
+        esp_pointer dd 0  
 
         cpu_brnd0  db 0x0d,0x0a,' ',0
         cpu_brand times 52 db 0
-        cpu_brnd0  db 0x0d,0x0a,0x0d,0x0a
+        cpu_brnd1  db 0x0d,0x0a,0x0d,0x0a,0
 ;===============================================================
 SECTION core_code vstart=0
 ;---------------------------------------------------------------
+;input:  esi（起始逻辑扇区号）
+;output: ax （指向用户程序头部的选择子）
 load_relocate_program:
 
         push ebx
@@ -205,7 +358,129 @@ load_relocate_program:
         mov ebx,core_buf
         call sys_routine_seg_sel:read_hard_disk_0
 
-        
+        mov eax,[core_buf]
+        mov ebx,eax
+        and ebx,0xfffffe00
+        add ebx,512
+        test eax,0x00000111
+        cmovnz eax,ebx
+
+        mov ecx,eax
+        call sys_routine_seg_sel:allocate_memory
+        mov ebx,ecx
+        push ebx
+
+        xor edx,edx
+        mov ecx,512
+        div ecx
+        mov ecx,eax
+
+        mov eax,mem_0_4_gb_seg_sel
+        mov ds,eax
+        mov eax,esi
+
+    .b1:
+        call sys_routine_seg_sel:read_hard_disk_0
+        inc eax
+        loop .b1
+
+        ;头部段描述符
+        pop edi                    ;edi=加载的程序的首地址
+        mov eax,edi
+        mov ebx,[edi+0x04]
+        dec ebx
+        mov ecx,0x00409200
+        call sys_routine_seg_sel:make_seg_descriptor
+        call sys_routine_seg_sel:set_up_gdt_descriptor
+        mov [edi+0x04],cx
+
+        ;代码段
+        mov eax,edi
+        add eax,[edi+0x14]
+        mov ebx,[edi+0x18]
+        dec ebx
+        mov ecx,0x00409800
+        call sys_routine_seg_sel:make_seg_descriptor
+        call sys_routine_seg_sel:set_up_gdt_descriptor
+        mov [edi+0x14],cx
+
+        ;数据段
+        mov eax,edi
+        add eax,[edi+0x1c]
+        mov ebx,[edi+0x20]
+        dec ebx
+        mov ecx,0x00409200
+        call sys_routine_seg_sel:make_seg_descriptor
+        call sys_routine_seg_sel:set_up_gdt_descriptor
+        mov [edi+0x1c],cx
+
+        ;堆栈段
+        mov ecx,[edi+0x0c]
+        mov ebx,0x000fffff
+        sub ebx,ecx
+        mov eax,0x1000
+        mul dword [edi+0x0c]
+        mov ecx,eax
+        call sys_routine_seg_sel:allocate_memory
+        add ecx,eax
+        mov ecx,0x00c09600
+        call sys_routine_seg_sel:make_seg_descriptor
+        call sys_routine_seg_sel:set_up_gdt_descriptor
+        mov [edi+0x1c],cx
+
+        ;重定位SALT
+        mov eax,core_data_seg_sel
+        mov ds,eax
+        mov eax,[edi+0x04]
+        mov es,eax
+
+        ;edi=程序加载首地址
+        cld
+        mov ecx,[es:0x24]
+        mov edi,0x28
+    .b2
+        push ecx
+        push edi
+
+        mov ecx,salt_items
+        mov esi,salt
+    .b3
+        push ecx
+        push esi
+        push edi
+
+        mov ecx,256
+        repe movsd
+        jnz .b4
+        mov eax,[esi]
+        mov [es:edi-256],eax
+        mov ax,[esi+4]
+        mov [es:esi-252],ax
+
+    .b4
+        pop ecx
+        pop esi
+        pop edi
+        add esi,salt_item_len
+        loop .b3
+
+        pop ecx
+        pop edi
+        add edi,256
+        loop .b2
+
+
+        pop es
+        pop ds
+
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+
+        ret
+
 ;---------------------------------------------------------------
 start:
         mov ecx,core_data_seg_sel
@@ -213,6 +488,7 @@ start:
 
         mov ebx,message_1
         call sys_routine_seg_sel:put_string
+        hlt
 
         ;显示处理器品牌信息(没有查看处理器是否支持,是反面典例)
         mov eax,0x80000002
@@ -246,6 +522,26 @@ start:
         mov ebx,message_5
         call sys_routine_seg_sel:put_string
         mov esi,50
+        call load_relocate_program
+
+        mov [esp_pointer],esp
+
+        mov ds,ax
+
+        jmp far [0x10]
+
+return_point:
+        mov eax,core_data_seg_sel
+        mov ds,eax
+
+        mov eax,core_data_seg_sel
+        mov ss,eax
+        mov esp,[esp_pointer]
+
+        mov ebx,message_6
+        call sys_routine_seg_sel:put_string
+
+        hlt
 
 ;---------------------------------------------------------------
 SECTION core_trail

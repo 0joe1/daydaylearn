@@ -306,10 +306,6 @@ set_up_gdt_descriptor:                      ;在GDT内安装一个新的描述�
          retf 
 ;-------------------------------------------------------------------------------
 make_seg_descriptor:                        ;构造存储器和系统的段描述符
-                                            ;输入：EAX=线性基地址
-                                            ;      EBX=段界限
-                                            ;      ECX=属性。各属性位都在原始
-                                            ;          位置，无关的位清零 
                                             ;返回：EDX:EAX=描述符
          mov edx,eax
          shl eax,16
@@ -410,7 +406,7 @@ load_relocate_program:                      ;加载并重定位用户程序
          add ebx,512                        ;低9位都为0 
          test eax,0x000001ff                ;程序的大小正好是512的倍数吗? 
          cmovnz eax,ebx                     ;不是。使用凑整的结果 
-      
+
          mov ecx,eax                        ;实际需要申请的内存数量
          call sys_routine_seg_sel:allocate_memory
          mov ebx,ecx                        ;ebx -> 申请到的内存首地址
@@ -437,7 +433,7 @@ load_relocate_program:                      ;加载并重定位用户程序
          mov ecx,0x00409200                 ;字节粒度的数据段描述符
          call sys_routine_seg_sel:make_seg_descriptor
          call sys_routine_seg_sel:set_up_gdt_descriptor
-         mov [edi+0x04],cx                   
+         mov [edi+0x04],cx
 
          ;建立程序代码段描述符
          mov eax,edi

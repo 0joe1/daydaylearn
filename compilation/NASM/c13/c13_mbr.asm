@@ -5,7 +5,7 @@
         mov ss,ax
         mov esp,0x7c00
 
-        mov eax,[cs:0x7c00+pdgt+0x02]
+        mov eax,[cs:0x7c00+pgdt+0x02]
         xor edx,edx
         mov ebx,16
         div ebx
@@ -13,24 +13,24 @@
         mov ebx,edx
 
         ;空描述符
-        mov dword[ebx:0x00],0x00000000
-        mov dword[ebx:0x04],0x00000000
+        mov dword[ebx+0x00],0x00000000
+        mov dword[ebx+0x04],0x00000000
 
         ;0-4GB数据段
-        mov dword[ebx:0x08],0x0000ffff
-        mov dword[ebx:0x0c],0x00cf9200
+        mov dword[ebx+0x08],0x0000ffff
+        mov dword[ebx+0x0c],0x00cf9200
 
         ;初始代码段描述符
-        mov dword[ebx:0x10],0x7c0001ff
-        mov dword[ebx:0x14],0x00409800
+        mov dword[ebx+0x10],0x7c0001ff
+        mov dword[ebx+0x14],0x00409800
 
         ;初始堆栈段描述符
-        mov dword[ebx:0x18],0x7c00fffe
-        mov dword[ebx:0x1c],0x00cf9600
+        mov dword[ebx+0x18],0x7c00fffe
+        mov dword[ebx+0x1c],0x00cf9600
 
         ;显示缓冲区描述符
-        mov dword[ebx:0x20],0x80007fff
-        mov dword[ebx:0x24],0x0040920b
+        mov dword[ebx+0x20],0x80007fff
+        mov dword[ebx+0x24],0x0040920b
 
         mov word [cs:0x7c00+pgdt],39
         lgdt [cs:0x7c00+pgdt]
@@ -60,7 +60,7 @@
         mov ebx,edi
         call read_hard_disk_0
 
-        mov eax,[ebx]
+        mov eax,[edi]   ;ebx已经改变了，不能刻舟求剑
         xor edx,edx
         mov ecx,512
         div ecx
@@ -80,13 +80,14 @@
         loop @2
 
     setup:
-        mov esi,[0x7c00+pdgt+0x02]
+        mov esi,[0x7c00+pgdt+0x02]
 
         ;公共例程段描述符
         mov eax,[edi+0x04]
         mov ebx,[edi+0x08]
         sub ebx,eax
         dec ebx
+        add eax,edi
         mov ecx,0x00409800
         call make_gdt_descripter
         mov [esi+0x28],eax
@@ -97,6 +98,7 @@
         mov ebx,[edi+0x10]
         sub ebx,eax
         dec ebx
+        add eax,edi
         mov ecx,0x00409200
         call make_gdt_descripter
         mov [esi+0x30],eax
@@ -185,7 +187,7 @@ read_hard_disk_0:
 make_gdt_descripter:
         mov edx,eax
         shl eax,16
-        or eax,bx
+        or ax,bx
 
         or edx,0xffff0000
         rol edx,8
