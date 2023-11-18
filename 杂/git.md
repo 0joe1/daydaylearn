@@ -73,6 +73,51 @@ type commit = struct {
 
 
 
+##### Git 引用
+
+ 我们需要一个文件来保存 SHA-1 值，并给文件起一个简单的名字，然后用这个名字指针来替代原始的 SHA-1 值。在 Git 里，这样的文件被称为“引用（references，或缩写为 refs）”；
+
+
+
+##### HEAD
+
+HEAD 文件是一个符号引用（symbolic reference），指向目前所在的分支。 所谓符号引用，意味着它并不像普通引用那样包含一个 SHA-1 值——它是一个指向其他引用的指针。 如果查看 HEAD 文件的内容，一般而言我们看到的类似这样：
+
+```
+$ cat .git/HEAD
+ref: refs/heads/master
+```
+
+
+
+##### 远程引用
+
+我们将看到的第三种引用类型是远程引用（remote reference）。 如果你添加了一个远程版本库并对其执行过推送操作，Git 会记录下最近一次推送操作时每一个分支所对应的值，并保存在 refs/remotes 目录下。 
+
+远程引用和分支（位于 refs/heads 目录下的引用）之间最主要的区别在于，远程引用是只读的。 虽然可以 git checkout 到某个远程引用，但是 Git 并不会将 HEAD 引用指向该远程引用。因此，你永远不能通过 commit 命令来更新远程引用。 Git 将这些远程引用作为记录远程服务器上各分支最后已知位置状态的书签来管理。
+
+
+
+##### 推送与拉取
+
+你必须显式地推送想要分享的分支。
+
+ `git push <remote> <local branch>:<remote branch>`：
+
+ `git branch --set-upstream-to=<remote>/<remote branch>`: 创建本地和远端分支的关联关系，会在 .git/config下添加：
+
+```
+[branch "master"]
+        remote = orange
+        merge = refs/heads/bbb
+```
+
+`push --set-upstream <remote> <remote branch>` 也有相同的功能，同时它还会把东西push上去。
+
+
+
+
+
 ### 命令集
 
 ##### hash-object
@@ -91,7 +136,7 @@ type commit = struct {
 
 ##### update-index
 
-将文件加入到index中。 如果文件本来不在index中，那么需要添加 --add 选项；同样必需的还有 `--cacheinfo` 选项，因为将要添加的文件位于 Git 数据库中，而不是位于当前目录下。 同时，需要指定文件模式、SHA-1 与文件名
+将文件加入到index中。 如果文件本来不在index中，那么需要添加 --add 选项；可 `--cacheinfo` 选项，手动指定文件模式、SHA-1 与文件名
 
 
 
@@ -115,7 +160,7 @@ type commit = struct {
 
 ##### commit-tree
 
- `commit-tree` 命令创建一个提交对象，为此需要指定一个树对象的 SHA-1 值，以及该提交的父提交对象（如果有的话）`-p`参数表示父提交对象
+ `commit-tree` 命令创建一个提交对象，为此需要指定一个树对象的 SHA-1 值，以及该提交的父提交对象（如果有的话）`-p`参数表示父对象
 
 
 
@@ -167,17 +212,29 @@ oops! 看来相同内容的文件使用的id都是一样的，这大概是因为
 
 ##### 查看 HEAD 到底是什么东西
 
-1.refs的head下有一个master，cat-file -t 查看，发现是个commit
+1.refs的heads下有一个master，cat-file -t 查看，发现是个commit
 
 2.cat commit下的内容，发现是一串哈希值
 
 3.分别 cat-file 哈希值和master分支，得到的结果是一样的
 
-说明是mater分支储藏的是指向一个commit的指针。那么我们将别的commit 替换这个HEAD下的文件，当前HEAD所指向的地方是不是会发生改变呢？
+说明是mater分支储藏的是指向一个commit的指针。那么我们将别的commit 替换这个master的内容，当前master所指向的地方是不是会发生改变呢？
 
-4.通过改写 master 文件的方式改变HEAD，git log查看
+4.改写 master 文件的方式，git log查看
 
 你会发现 如今HEAD指向的commit已经变成了我们刚才指定的commit，它的parent也都消失了。
+
+5.再在heads下添加其他文件,checkout到新建分支，观察 HEAD 的变化
+
+
+
+##### 远程引用
+
+1.将本地分支关联到远程，观察 config 文件的变动，看到有一行 fetch
+
+想必跟 git fetch 有关系，将冒号前的远程分支的 commit 下载到本地，并将 refs/remote/ 下的生成相应的分支指针，指向相应的 commit 
+
+2.改动 fetch那一行的内容，观察相应的变化
 
 
 
