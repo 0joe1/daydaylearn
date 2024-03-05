@@ -1,0 +1,64 @@
+MBR分区
+同步滚动：
+早期磁盘第一个扇区里面含有的重要信息我们称为MBR (Master BootRecord) 格式。
+MBR 引导扇区中的内容是:
+(1)446 字节的引导程序及参数;
+(2)64 字节的分区表;
+(3)2 字节结束标记 0x55 和 0xaa。
+
+分区表最多可以有四条表项，将整块磁盘分为4个主分区。
+
+![磁盘分区表的作用示意图](https://upload-images.jianshu.io/upload_images/25929266-37e89c8db1c58ce8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+磁盘分区表的作用示意图
+
+当然你可以拥有超过4个分区，只要你将一个分区划分为总扩展分区即可。
+不过总扩展分区不能格式化，你需要将它划分为一个或多个逻辑分区。
+如图所示，将主扩展分区分为多个：
+
+![磁盘分区表作用示意图](https://upload-images.jianshu.io/upload_images/25929266-33b2d5ea846c677b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+
+磁盘分区表作用示意图
+
+
+这里，主扩展分区最前面的那个扇区称为EBR(Extended boot record)，它记载了主延展分区如何进一步细分的信息。上图只是一个经简化的图罢了，事实上，EBR是会分布在每个分区的最前面的扇区来记载分区信息的。
+EBR的结构与MBR基本相同。只不过原来的引导程序一般用零填充，一般使用两个表项，多个EBR以一种类似链表的形式串联起来。
+
+![EBR的结构](https://upload-images.jianshu.io/upload_images/25929266-2534e4ff65aad108.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+EBR的结构
+
+
+
+EBR的第一个条目
+
+Starting sector =从EBR开头到紧随其后的逻辑分区的偏移量，指向逻辑分区
+Number of sectors = 这个逻辑分区的大小
+EBR的第二个条目
+如果是最后一个子扩展分区就是全0，否则指向下一个EBR。
+
+Partition type code = [0x05] (CHS addressing) or [0x0F] (LBA addressing)
+Starting sector = 下一个EBR开头与第一个EBR开头的偏移地址
+Number of sectors = 下一个从EBR开头到逻辑分区结束为止的大小（包括中间的未使用部分）
+下面是一个示例：
+
+![示例](https://upload-images.jianshu.io/upload_images/25929266-ee8cdfbc02a9e374.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+示例
+
+MBR会遍历各分区找到操作系统加载器，将控制转移给它以完成操作系统的自举。
+为了让 MBR 知道哪里有操作系统,我们在分区时,如果想在某个分区中安装操作系统,就用分区工具将该分区设置为活动分区,设置活动分区的本质就是把分区表中该分区对应的分区表项中的活动标记为0x80。于是MBR就会跳到那个分区的第一个扇区，把接力棒给下一位选手。
+位于各分区(主分区或逻辑分区)最开始的扇区的是OBR。OBR 其实就是 DBR,指的都是操作系统引导程序,访扇区称为操作系统引导扇区,即 OBR 引导扇区。在 OBR 扇区的前 3 个字节存放了跳转指令,这同样是约定,因此 MBR 找到活动分区后,就大胆主动跳到活动分区 OBR 引导扇区的起始处,该起始处的跳转指令马上将处理器带入操作系统引导程序。
+
+DBR 中的内容大概是:
+(1)跳转指令,使 MBR 跳转到引导代码;
+(2)厂商信息、DOS 版本信息;
+(3)BIOS 参数块 BPB,即 BIOS Parameter Block;
+(4)操作系统引导程序;
+(5)结束标记 0x55 和 0xaa。
+![MBR、EBR、OBR 位置关系](https://upload-images.jianshu.io/upload_images/25929266-9ccde76a80a225f7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+MBR、EBR、OBR 位置关系
+参考资料：
+操作系统真相还原
+鸟哥的 Linux 私房菜:基础学习篇 第四版
+https://en.wikipedia.org/wiki/Extended_boot_record
