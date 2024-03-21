@@ -41,7 +41,7 @@ stegananalysis 常用来检测 container 中隐藏的信息。基本分析方法
 $$
 L(D,G)=E_{x\sim p_{data(x)}}[\log D(x)]+E_{z\sim p_{noise(z)}}[\log (1-D(G(z)))] -> \mathop{min}\limits_G \; \mathop{max}\limits_D
 $$
-$D(x)$代表 x 是一个真实图像的概率，$G(z)$是从噪音 z 生成的图像。
+$D(x)$代表鉴别器判断 x 是一个真实图像的概率，$G(z)$是从噪音 z 生成的图像。
 
 保持 G 不变，更新模型D： $\theta_D \leftarrow \theta_D + \lambda_D \nabla_D L $​ 。
 
@@ -61,5 +61,17 @@ $$
 
 ### 4.Steganographic GAN
 
+在上面的基础上增添了鉴别器S，用来鉴定某个图像是否含有隐藏信息。
+$$
+L=\alpha(E_{x\sim p_{data}(x)}[\log D(x)]+E_{z\sim p_{noise(z)}}[\log (1-D(G(z)))])+(1-\alpha)E_{z \sim p_{noise(z)}}[\log S(Stego(G(z)))+\log (1-S(G(z)))] -> \mathop{min}\limits_G \; \mathop{max}\limits_D \; \mathop{max}\limits_S
+$$
+$Stego(x)$ 表示含密的载体图像。
+
+更新D：$\theta_D \leftarrow \theta_D + \lambda_D \nabla_G L$
+
+其中：
+$$
+\nabla_G L = \alpha(E_{x\sim p_{data(x)}}+E_{z\sim p_{noise(z)}})
+$$
 
 
