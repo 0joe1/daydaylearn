@@ -49,9 +49,9 @@ def Tmatrix(matrix):
 def text2matrix(text):
     matrix=[]
     move=8*15
-    for i in range(4):
+    for _ in range(4):
         row = []
-        for j in range(4):
+        for _ in range(4):
             byte = (text >> move)&0xff
             row.append(byte)
             move -= 8
@@ -103,7 +103,7 @@ def mul(a,b):
     while(2**bit <= a):
         if a&(2**bit):
             t=b
-            for i in range(bit):
+            for _ in range(bit):
                 t = xtime(t)
             ans ^= t
         bit+=1
