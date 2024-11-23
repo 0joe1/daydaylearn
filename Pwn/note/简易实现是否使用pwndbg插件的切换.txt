@@ -1,0 +1,8 @@
+在.gdbinit内添加函数
+define init-pwndbg
+source ~/.gdbinit_pwndbg
+end
+
+在/usr/bin 下建立gdb-pwndbg
+#!/bin/sh
+exec gdb -q -ex init-pwndbg "$@"

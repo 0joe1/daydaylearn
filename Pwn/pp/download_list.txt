@@ -1,0 +1,48 @@
+ida_pro [done]
+Windows虚拟机，从百度网盘下载
+=============================================================
+pwntools [done] zio [done] ropper [done] gef [done]
+pip install 一下即可
+
+=============================================================
+one_gadget [done] seccomp-tools [done] pathelf [done]
+yay -S 
+
+=============================================================
+ROPgadget [done]
+git clone https://github.com/JonathanSalwan/ROPgadget.git
+cd ROPgadget
+sudo python setup.py install
+
+=============================================================
+pwndbg [done]
+yay -S poetry
+git clone https://github.com/pwndbg/pwndbg
+cd pwndbg
+./setup.sh
+
+=============================================================
+main_arena_offset [done]
+是一个脚本
+git clone https://github.com/bash-c/main_arena_offset.git
+然后把脚本移出来使用
+
+=============================================================
+peda 
+qemu busybox 
+
+=============================================================
+LibcSearcher(libc database)  [done]
+git clone https://github.com/lieanu/LibcSearcher.git
+cd LibcSearcher
+sudo python setup.py install
+
+后期可参考资料：
+https://www.brokenpoems.xyz/archives/96/
+https://blog.csdn.net/neuisf/article/details/103829683
+
+=============================================================
+glibc_all_in_one
+sudo git clone https://github.com/matrix1001/glibc-all-in-one.git #也可以自行去官网下载然后解压
+cd glibc-all-in-one/
+udo python3 update_list

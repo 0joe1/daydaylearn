@@ -1,0 +1,7 @@
+### 主定理（Master Theorem）
+
+1.如果 $f(n)=O(n^{\log_b (a)-\epsilon})$ ，如果$\epsilon >0$，那么$T=(n^{\log_b (a)})$
+
+2.如果 $f(n)=\Theta (n^{\log_b (a)})$ ，那么 $T(n)=O(n^{\log_b(a)} \cdot \log(n))$
+
+3.如果 $f(n)=\Omega(n^{\log_b (a)+\epsilon})$，若存在$\epsilon>0$，并且 对于一个常数 $c< 1$，$af(n/b)\leq cf(n)$，并且$n \rightarrow \infty$，那么便适用$T(n)=\Theta(f(n))$
